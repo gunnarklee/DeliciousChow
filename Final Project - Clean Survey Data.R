@@ -143,12 +143,10 @@ nums <- sapply(Categories, length)
 CatMap <- unlist( Map( rep, nams, nums ) )
 names(CatMap) <- unlist( Categories )
 data_tmp <- transform(data_tmp, TreatMent = CatMap[ recepie ])
-data_tmp['measurement']=data_tmp['measurement']-16 # remove the constant
-data_long<-data_tmp
-rm(data_tmp)
-write.csv(data_long 'LongCleanDT.csv')
+#data_tmp['measurement']=data_tmp['measurement']-16 # remove the constant
+data_tmp
+write.csv(data_tmp, 'LongCleanDT.csv')
 ###################### make figures #######################
-
 pdf("D:/temp/graph4.pdf" paste(dir, '/clean_survey_data.csv', sep=''))
 boxplot(write)
 dev.off()
