@@ -1,6 +1,20 @@
 library(ggplot2)
 
-data <- read.csv("C:/Users/Rich/Downloads/Questionnaire__Copy (1).csv", stringsAsFactors=FALSE)
+#dir="C:/Users/Rich/Downloads/Questionnaire__Copy (1).csv"
+
+#To refer back to the source file on github
+#download.file(url='http://github.com/gunnarklee/DeliciousChow/blob/master/clean_data.csv',
+#              destfile='clean_data.csv', method='curl')
+#dir = 'clean_data.csv'
+
+
+dir='/Users/gunnarkleemann/Google Drive/Berkeley assignments/241files/W241_Final_DeliciousChow'
+dir2=paste(dir, '/clean_survey_data.csv', sep='')
+data <- read.csv(dir2, stringsAsFactors=FALSE, sep=';')
+#tabulate(data)
+table(data)
+summary(data)
+#########################################
 
 ci <- function(x) {
   se <- sd(x, na.rm=T)/sqrt(na.omit(length(x)))
@@ -64,12 +78,13 @@ data$exercise[data$exercise == 5] <- 'Never'
 data$bmi <- (data$weight * 0.45) / (data$height * 0.025)**2
 
 #############################################################################################################################
-
-summary(data$age)
+names(data)
+summary(data$age); print ('In 2010, the median age was 37.2 in the US')
+#ref : https://www2.census.gov/prod/cen2010/briefs/c2010br-03.pdf
 summary(data$bmi)
 summary(data$income)
-summary(data$annual.income)
-
+summary(data$annual.income) ;print ('Median household income in the US was $51,939 in 2013')
+# ref: https://www.census.gov/content/dam/Census/library/publications/2014/demo/p60-249.pdf
 #############################################################################################################################
 
 ggplot(data, aes(gender)) + geom_bar() + labs(title='Gender Distribution', x='Gender', y='Count')
@@ -82,3 +97,60 @@ ggplot(data, aes(bmi)) + geom_histogram(binwidth=2) + geom_vline(xintercept=18.5
   geom_vline(xintercept=25, color='green', size=1) + geom_vline(xintercept=18.4, color='yellow', size=1) +
   geom_vline(xintercept=25.1, color='yellow', size=1) + geom_vline(xintercept=29.9, color='yellow', size=1) +
   geom_vline(xintercept=30, color='red', size=1) + labs(title='BMI Histogram', x='BMI', y='Count')
+
+##############################reshape the data#######################
+require (dplyr)
+require (tidyr)
+data_long=gather(data,  recepie, measurement, Guiltless.Asian.Glazed.Chicken.Thighs:Chicken.Tostadas, na.rm=TRUE)
+head(data_long)
+
+###aggregate private data
+#data$annual.income[data$annual.income==290009] <- 29000
+
+########################## Map classfications to recepies #######
+
+data_tmp<-data_long
+Categories <- list(Asian =c("Guiltless.Asian.Glazed.Chicken.Thighs", "Low.Cal.Asian.Glazed.Chicken.Thighs"),
+                    BBQ= c("Healthy.Chicken.with.Honey.Barbecue.Sauce", "Lite.Chicken..Red.Grape..and.Pesto.Pizza"),
+                    Cajun= c("Cajun.Chicken","Healthy.Cajun.Chicken"),
+                    Chicken =c("Chicken.with.Quinoa", "Chicken.with.Quinoa", "Healthy.Chicken.with.Salsa"),
+                    Cilantro=c("Guiltless.Chicken.Breast.Cilantro.Lime.Chicken.with..Salsa", "Chicken.Breast.Cilantro.Lime.Chicken.with.Avocado.Salsa"),      
+                    Cutlets = c("Chicken.Cutlets.with.Vegetables", "Chicken.Cutlets.with.Avocado.Salsa"),
+                    Pizza =c("Lite.Chicken.with.Honey.Barbecue.Sauce", "Chicken..Sausage..and.Pesto.Pizza"),
+                    Sate= c("Chicken.Sate.with.Veggies", "Chicken.Sate.with.Peanut.Sauce"),
+                    Strips= c("Guiltless.Chicken.Strips.with.Blue.Cheese", "Chicken.Strips.with.Blue.Cheese"),
+                    Tacos= c("Lite.Beef.and.Bean.Chili.Tacos", "Lite.Beef.and.Bean.Chili.Tacos"),
+                    Tostados= c("Chicken.Tostadas", "Low.Cal.Chicken.Tostadas"),
+                    Goat= "Chicken.Breasts.with.Goat.Cheese.and.Pine.Nuts")
+
+nams <- names( Categories )
+nums <- sapply(Categories, length)
+CatMap <- unlist( Map( rep, nams, nums ) )
+names(CatMap) <- unlist( Categories )
+data_tmp['recepie'] <- sapply(data_tmp['recepie'], as.character) #Tranform the factor leveles to string 
+data_tmp <- transform(data_tmp, MealStyle = CatMap[ recepie ])
+
+Categories <- list(Quinoa =  ("Chicken.with.Quinoa"),
+                    Vegetable =	c("Chicken.Cutlets.with.Vegetables","Chicken.Sate.with.Veggies"),
+                    Control	= c("Chicken.Tostadas","Chicken.Strips.with.Blue.Cheese","Chicken.Sate.with.Peanut.Sauce", "Chicken.Cutlets.with.Avocado.Salsa","Chicken.Breast.Cilantro.Lime.Chicken.with.Avocado.Salsa","Chicken.with.Mango.Salsa", "Cajun.Chicken","Chicken.Breasts.with.Goat.Cheese.and.Pine.Nuts","Chicken..Sausage..and.Pesto.Pizza"),
+                    Guiltless =	c("Guiltless.Chicken.Strips.with.Blue.Cheese","Guiltless.Chicken.Breast.Cilantro.Lime.Chicken.with..Salsa","Guiltless.Asian.Glazed.Chicken.Thighs"),
+                    Healthy =	c("Healthy.Chicken.with.Salsa","Healthy.Chicken.with.Honey.Barbecue.Sauce","Healthy.Cajun.Chicken"),
+                    Lite = c("Lite.Beef.and.Bean.Chili.Tacos","Lite.Chicken.with.Honey.Barbecue.Sauce","Lite.Chicken..Red.Grape..and.Pesto.Pizza"),
+                    LowCal =	c("Low.Cal.Chicken.Tostadas","Low.Cal.Beef.and.Bean.Chili.Tacos","Low.Cal.Asian.Glazed.Chicken.Thighs"))
+                   
+nams <- names( Categories )
+nums <- sapply(Categories, length)
+CatMap <- unlist( Map( rep, nams, nums ) )
+names(CatMap) <- unlist( Categories )
+data_tmp <- transform(data_tmp, TreatMent = CatMap[ recepie ])
+data_tmp['measurement']=data_tmp['measurement']-16 # remove the constant
+data_long<-data_tmp
+rm(data_tmp)
+write.csv(data_long 'LongCleanDT.csv')
+###################### make figures #######################
+
+pdf("D:/temp/graph4.pdf" paste(dir, '/clean_survey_data.csv', sep=''))
+boxplot(write)
+dev.off()
+
+
