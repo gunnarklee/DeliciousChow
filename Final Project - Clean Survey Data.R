@@ -110,6 +110,8 @@ head(data_long)
 ########################## Map classfications to recepies #######
 
 data_tmp<-data_long
+
+##Map meal style
 Categories <- list(Asian =c("Guiltless.Asian.Glazed.Chicken.Thighs", "Low.Cal.Asian.Glazed.Chicken.Thighs"),
                     BBQ= c("Healthy.Chicken.with.Honey.Barbecue.Sauce", "Lite.Chicken..Red.Grape..and.Pesto.Pizza"),
                     Cajun= c("Cajun.Chicken","Healthy.Cajun.Chicken"),
@@ -130,6 +132,7 @@ names(CatMap) <- unlist( Categories )
 data_tmp['recepie'] <- sapply(data_tmp['recepie'], as.character) #Tranform the factor leveles to string 
 data_tmp <- transform(data_tmp, MealStyle = CatMap[ recepie ])
 
+##map treatment word
 Categories <- list(Quinoa =  ("Chicken.with.Quinoa"),
                     Vegetable =	c("Chicken.Cutlets.with.Vegetables","Chicken.Sate.with.Veggies"),
                     Control	= c("Chicken.Tostadas","Chicken.Strips.with.Blue.Cheese","Chicken.Sate.with.Peanut.Sauce", "Chicken.Cutlets.with.Avocado.Salsa","Chicken.Breast.Cilantro.Lime.Chicken.with.Avocado.Salsa","Chicken.with.Mango.Salsa", "Cajun.Chicken","Chicken.Breasts.with.Goat.Cheese.and.Pine.Nuts","Chicken..Sausage..and.Pesto.Pizza"),
@@ -142,13 +145,30 @@ nams <- names( Categories )
 nums <- sapply(Categories, length)
 CatMap <- unlist( Map( rep, nams, nums ) )
 names(CatMap) <- unlist( Categories )
-data_tmp <- transform(data_tmp, TreatMent = CatMap[ recepie ])
-#data_tmp['measurement']=data_tmp['measurement']-16 # remove the constant
-data_tmp
-write.csv(data_tmp, 'LongCleanDT.csv')
-###################### make figures #######################
-pdf("D:/temp/graph4.pdf" paste(dir, '/clean_survey_data.csv', sep=''))
-boxplot(write)
-dev.off()
+data_tmp <- transform(data_tmp, Treatment = CatMap[ recepie ])
+data_tmp['measurement']=data_tmp['measurement']-16 # remove the constant
 
+## Map binary treatment variable
+Categories <- list(Treated = c("Quinoa", "Vegetable","Guiltless", "Healthy", "Lite", " LowCal"),
+                    Control= "Control")
+                    
+nams <- names( Categories )
+nums <- sapply(Categories, length)
+CatMap <- unlist( Map( rep, nams, nums ) )
+names(CatMap) <- unlist( Categories )
+data_tmp <- transform(data_tmp, Binarytreat = CatMap[ Treatment ])
+
+##look at the data 
+head(data_tmp)
+write.csv(data_tmp, 'LongCleanDT.csv')
+
+###################### make figures #######################
+
+#quartz()
+pdf(paste(dir, '/excercise.pdf', sep=''))
+data_tmp$exercise <- factor(data_tmp$exercise, levels = c("Never", "Less often than once a month",
+   "Once or twice a month","Once or twice a week","Several Times a week"))
+bp<-ggplot(data_tmp, aes(x=exercise, y=measurement, fill=exercise)) + geom_boxplot() + labs(title ="Food preference vs. exercise habit", y="food preference (1-7)")
+bp
+dev.off()
 
